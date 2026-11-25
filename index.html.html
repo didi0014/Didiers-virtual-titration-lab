@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Didier's Virtual Titration Lab</title>
+<style>
+:root{--navy:#142b4a;--gold:#e3b341;--ink:#203044;--muted:#617184;--paper:#f4f6f9;--line:#d9e0e8;--blue:#2866a5;--green:#20734b;--red:#a53c3c}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 Arial,Helvetica,sans-serif}
+header{background:var(--navy);color:white;padding:24px max(20px,calc((100% - 1120px)/2));border-bottom:5px solid var(--gold)}
+header h1{margin:0;font-size:clamp(1.5rem,3vw,2.2rem)}header p{margin:5px 0 0;color:#dce5ef}
+main{max-width:1120px;margin:24px auto;padding:0 18px 50px}
+.notice{background:#fff8e6;border:1px solid #ead59b;border-radius:10px;padding:12px 15px;margin-bottom:18px}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0}
+.step-tab{border:1px solid var(--line);border-radius:9px;background:white;padding:10px 8px;text-align:center;font-weight:700;color:var(--muted);font-size:.9rem}
+.step-tab.active{background:var(--navy);border-color:var(--navy);color:white}.step-tab.done{border-color:#8bb9a1;color:var(--green);background:#f0f8f3}
+.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin:14px 0;box-shadow:0 3px 12px #132b4a0b}
+.panel h2{color:var(--navy);margin:0 0 5px;font-size:1.35rem}.sub{color:var(--muted);margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.step23-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.step23-grid>.panel{min-width:0;margin:14px 0;padding:18px}
+.step23-grid .apparatus{padding:14px}
+.step23-grid .chart-wrap{width:100%;overflow:hidden}
+.step23-grid #chart{display:block;width:100%;height:auto}
+label{display:block;font-weight:700;margin-bottom:5px}select,input{font:inherit;border:1px solid #bdc8d5;border-radius:7px;padding:10px;width:100%;background:white;color:var(--ink)}
+.field{margin-bottom:12px}.small{font-size:.9rem;color:var(--muted)}
+button{border:0;border-radius:8px;padding:10px 16px;background:var(--navy);color:white;font:700  .98rem Arial;cursor:pointer;margin:5px 6px 5px 0}
+button.secondary{background:#e9eef4;color:var(--navy);border:1px solid #cbd5e1}button.gold{background:#bd8b1e;color:#111}button:disabled{opacity:.45;cursor:not-allowed}
+.status{padding:10px 12px;border-radius:8px;background:#edf3f9;margin:12px 0}.success{background:#eaf6ef;color:#185d3c}.error{background:#fff0ef;color:#8d2929}
+.lab{display:grid;grid-template-columns:1fr;gap:18px;align-items:center}
+.bench{background:linear-gradient(#f8fbff,#edf3f8);border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center}
+.apparatus{max-width:620px;margin:0 auto;width:100%;padding:22px}
+.burette{height:205px;width:58px;border:3px solid #6c8299;border-radius:7px;margin:10px auto 0;position:relative;background:linear-gradient(90deg,#ffffff,#f2f8fc 45%,#fff);overflow:hidden;box-shadow:inset 4px 0 5px #dce5ed}
+.burette-neck,.burette-tip{display:none}
+.liquid{position:absolute;bottom:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,#c9e4f5,#8fc3e5);transition:height .2s;border-radius:3px}
+.tap{width:54px;height:8px;background:#6c8299;margin:3px auto 12px;border-radius:5px;position:relative}.tap:after{content:"";position:absolute;width:5px;height:17px;background:#6c8299;left:24px;top:-5px;border-radius:3px}
+.flask{height:155px;width:190px;margin:8px auto 5px;position:relative;border:3px solid #8295a8;border-top:0;border-radius:0 0 38px 38px;clip-path:polygon(39% 0,61% 0,61% 32%,98% 94%,94% 100%,6% 100%,2% 94%,39% 32%);background:linear-gradient(90deg,#fff,#f7fbff 55%,#fff);overflow:hidden;filter:drop-shadow(0 0 1.5px #405a73)}
+.flask-liquid{position:absolute;bottom:0;left:5%;width:90%;height:38%;background:#dcecf7;transition:height .25s,background .2s}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.flask-label{margin-top:16px}
+.metric{background:white;border:1px solid var(--line);border-radius:8px;padding:8px}.metric strong{display:block;color:var(--navy);font-size:1.1rem}
+.chart-wrap{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}svg{width:100%;height:auto;display:block}
+.question{border:1px solid var(--line);border-radius:10px;padding:15px;margin:12px 0}.question h3{font-size:1rem;margin:0 0 8px;color:var(--navy)}.question p{margin:5px 0 10px}
+.answer-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.feedback{font-size:.9rem;margin-top:7px;min-height:22px}
+.report{background:#fbfcfe;border:2px solid var(--navy);border-radius:12px;padding:20px}
+.report h3{color:var(--navy);margin-top:0}.report table{border-collapse:collapse;width:100%;margin:12px 0}.report td,.report th{border:1px solid var(--line);padding:8px;text-align:left}
+.hidden{display:none!important}.muted{color:var(--muted)}
+@media(max-width:720px){.grid,.lab{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:1fr 1fr}.panel{padding:16px}}
+@media print{
+ header,.steps,button,.notice,#setup,#titrate,#curve,#collection,#analysis{display:none!important}
+ body{background:white;color:#111}.panel{box-shadow:none;border:0;padding:0;margin:0}
+ main{max-width:none;margin:0;padding:0}#summary{display:block!important}
+ .report{border:1px solid #555;padding:16px}
+}
+@media(max-width:760px){.step23-grid{grid-template-columns:1fr}.step23-grid>.panel{margin:10px 0}}
+.step23-grid>.curve-panel{margin-top:250px}
+@media(max-width:760px){.step23-grid>.curve-panel{margin-top:10px}}
+</style>
+</head>
+<body>
+<header><h1>Didier's Virtual Titration Lab</h1><p>Strong acid–strong base titration · HCl with NaOH</p></header>
+<main>
+<div class="notice"><strong>Lab goal:</strong> Use a virtual titration to determine the concentration of an unknown hydrochloric acid solution. Collect evidence from your titration curve, then use stoichiometry to calculate the unknown concentration.</div>
+<nav class="steps" aria-label="Lab steps">
+<div class="step-tab active" id="tab1">1. Set Up</div><div class="step-tab" id="tab2">2. Titrate</div><div class="step-tab" id="tab3">3. Watch the Curve</div><div class="step-tab" id="tab4">4. Data Collection</div><div class="step-tab" id="tab5">5. Data Analysis</div>
+</nav>
+<section class="panel" id="setup">
+<h2>1. Set Up</h2><p class="sub">Your analyte is hydrochloric acid (HCl). Your titrant is sodium hydroxide (NaOH). The HCl concentration is unknown to you.</p>
+<div class="grid">
+<div class="field"><label>Volume of HCl in the flask</label><select id="acidVol"><option value="25">25.00 mL</option><option value="20">20.00 mL</option><option value="10">10.00 mL</option></select></div>
+<div class="field"><label>Concentration of NaOH in the burette</label><select id="baseM"><option value="0.100">0.100 M</option><option value="0.200">0.200 M</option><option value="0.050">0.050 M</option></select></div>
+<div class="field"><label>Indicator</label><select id="indicator"><option value="phen">Phenolphthalein</option></select></div>
+<div class="field"><label>Unknown HCl sample</label><div class="status">A fresh unknown concentration will be assigned when you begin.</div></div>
+</div>
+<p class="small">The simulation uses 25 °C, a 1:1 reaction, and 0.05 mL per drop. The equivalence point is approximately pH 7.00.</p>
+<button id="begin">Prepare the lab</button><span id="setupMsg" class="small"></span>
+</section>
+<div class="step23-grid">
+<section class="panel hidden" id="titrate">
+<h2>2. Titrate</h2><p class="sub">Add NaOH from the burette to the HCl flask. Swirl the flask and watch the pH and indicator color. Use smaller additions as you approach the endpoint.</p>
+<div class="lab">
+<div class="bench apparatus">
+<strong>Burette: <span id="buretteLabel">0.100 M NaOH</span></strong>
+<div class="burette" aria-label="Virtual burette">
+  <div class="liquid" id="buretteLiquid"></div>
+</div>
+<div class="tap"></div>
+<div class="flask-label"><strong>Erlenmeyer flask: HCl + indicator</strong></div>
+<div class="flask" aria-label="Erlenmeyer flask">
+  <div class="flask-liquid" id="flaskLiquid"></div>
+</div>
+<div><strong>Solution appearance:</strong> <span id="colorText">Colorless</span></div>
+<div class="small">Phenolphthalein is colorless in acidic solution and pink in basic solution.</div>
+<div class="metrics">
+  <div class="metric">NaOH added<strong id="added">0.00 mL</strong></div>
+  <div class="metric">pH<strong id="ph">—</strong></div>
+</div>
+</div>
+</div>
+<div class="status" id="labStatus">Prepare the lab to begin.</div>
+<button id="drop">Add one drop (0.05 mL)</button><button class="secondary" id="addHalf">Add 0.50 mL</button><button class="secondary" id="addOne">Add 1.00 mL</button><button class="secondary" id="addFive">Add 5.00 mL</button><button class="secondary" id="resetTrial">Restart titration</button>
+<p class="small">The burette begins at 0.00 mL. For this model, additions are limited to the 50.00 mL burette capacity.</p>
+</section>
+<section class="panel hidden curve-panel" id="curve">
+<h2>3. Watch the Curve</h2><p class="sub">The graph updates as you add titrant. Use the steep vertical region to estimate the equivalence point.</p>
+<div class="chart-wrap"><svg id="chart" viewBox="0 0 720 390" role="img" aria-label="Titration curve showing pH versus volume of sodium hydroxide added"></svg></div>
+<div class="metrics"><div class="metric">Current pH<strong id="curvePH">—</strong></div><div class="metric">Volume added<strong id="curveVol">0.00 mL</strong></div></div>
+<p class="small">Tip: the equivalence point is at the center of the sharp pH change. The indicator endpoint is the observed color change; it may occur slightly after the equivalence point.</p>
+</section>
+</div>
+<section class="panel hidden" id="collection">
+<h2>4. Data Collection</h2><p class="sub">Use the graph to identify the equivalence point. Record its volume and pH. Do not calculate the unknown concentration yet.</p>
+<div class="question"><h3>A. Equivalence-point volume</h3><p>Use the center of the steep vertical section of your titration curve. What is the equivalence-point volume?</p><div class="answer-row"><input id="eqVolInput" type="number" step="0.01" placeholder="Equivalence volume (mL)"><button class="secondary" id="checkEqVol">Check volume</button></div><div id="eqVolFeedback" class="feedback"></div></div>
+<div class="question"><h3>B. pH at the equivalence point</h3><p>For a strong acid–strong base titration at 25 °C, what is the approximate pH at equivalence?</p><div class="answer-row"><input id="eqPhInput" type="number" step="0.1" placeholder="Equivalence-point pH"><button class="secondary" id="checkEqPh">Check pH</button></div><div id="eqPhFeedback" class="feedback"></div></div>
+<div class="status" id="collectionStatus">Complete both data-collection checks to continue to Data Analysis.</div>
+<button id="toAnalysis" disabled>Continue to Data Analysis</button>
+</section>
+<section class="panel hidden" id="analysis">
+<h2>5. Data Analysis</h2><p class="sub">Use your collected equivalence-point data to determine the concentration of the unknown HCl. The NaOH molarity and original HCl volume come from Step 1. Show your thinking as you work through each step.</p>
+<div class="question"><h3>1. Balanced chemical equation</h3><p>Enter the balanced reaction between hydrochloric acid and sodium hydroxide.</p><select id="q1"><option value="">Choose the balanced equation</option><option value="wrong1">HCl + NaOH → Na₂Cl + H₂O</option><option value="correct">HCl + NaOH → NaCl + H₂O</option><option value="wrong2">2HCl + NaOH → NaCl + H₂O</option><option value="wrong3">HCl + 2NaOH → NaCl + 2H₂O</option></select><div id="f1" class="feedback"></div><button class="secondary" data-check="1">Check answer</button></div>
+<div class="question"><h3>2. Volume of titrant used</h3><p>Use the equivalence-point volume you identified in Step 4. Enter the volume in liters.</p><input id="q2" type="number" step="0.00001" placeholder="Volume of NaOH (L)"><div id="f2" class="feedback"></div><button class="secondary" data-check="2">Check answer</button></div>
+<div class="question"><h3>3. Moles of titrant</h3><p>Calculate the moles of NaOH added. Use the known NaOH molarity and your volume in liters. Include units in your written work.</p><input id="q3" type="number" step="any" placeholder="Moles of NaOH (mol)"><div id="f3" class="feedback"></div><button class="secondary" data-check="3">Check answer</button></div>
+<div class="question"><h3>4. Mole ratio</h3><p>According to the balanced equation, what is the mole ratio of HCl to NaOH?</p><div class="answer-row"><select id="q4"><option value="">Choose a ratio</option><option value="1:1">1:1</option><option value="1:2">1:2</option><option value="2:1">2:1</option><option value="2:3">2:3</option></select><button class="secondary" data-check="4">Check answer</button></div><div id="f4" class="feedback"></div></div>
+<div class="question"><h3>5. Moles of analyte</h3><p>Use the mole ratio to determine the moles of HCl originally in the flask.</p><input id="q5" type="number" step="any" placeholder="Moles of HCl (mol)"><div id="f5" class="feedback"></div><button class="secondary" data-check="5">Check answer</button></div>
+<div class="question"><h3>6. Concentration of the analyte</h3><p>Calculate the molarity of the original HCl sample. Use the original HCl volume in liters.</p><input id="q6" type="number" step="any" placeholder="Concentration of HCl (M)"><div id="f6" class="feedback"></div><button class="secondary" data-check="6">Check answer</button></div>
+<div class="status" id="analysisStatus">Work through the questions in order. You can retry answers; hints are available when you need them.</div>
+<button id="showReport" disabled>View Final Lab Summary</button>
+</section>
+<section class="panel hidden" id="summary">
+<h2>Lab Summary</h2><p class="sub">Review your experimental results and analysis. Print this page or save it as a PDF for your records.</p>
+<div class="report" id="reportContent"></div>
+<button id="printReport">Print / Save as PDF</button><button class="secondary" id="newLab">Start a new lab with a new unknown</button>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let acidM=0,acidV=25,baseM=.1,vol=0,points=[],started=false,checks={eqv:false,eqph:false},answers={};
+const dropSize=.05, eqTolerance=.35;
+function equivalence(){return acidM*acidV/baseM}
+function pH(v){
+ // Include water autoionization so the curve approaches pH 7 smoothly
+ // at equivalence instead of producing an artificial discontinuity.
+ const acidMol=acidM*acidV/1000,baseMol=baseM*v/1000;
+ const total=(acidV+v)/1000,net=(acidMol-baseMol)/total,kw=1e-14;
+ const h=(net+Math.sqrt(net*net+4*kw))/2;
+ return -Math.log10(h);
+}
+function fmt(n,d=2){return Number(n).toFixed(d)}
+function setFeedback(id,msg,ok){$(id).textContent=msg;$(id).className='feedback '+(ok?'success':'error')}
+function setTab(n){for(let i=1;i<=5;i++){$('tab'+i).classList.toggle('active',i===n);$('tab'+i).classList.toggle('done',i<n)}}
+function show(id){$(id).classList.remove('hidden')}
+function begin(){
+ acidV=Number($('acidVol').value);baseM=Number($('baseM').value);
+ // Randomized unknown, selected to keep equivalence point within a useful portion of the burette.
+ const targetEq=12+Math.random()*25;
+ acidM=baseM*targetEq/acidV;
+ vol=0;points=[];started=true;checks={eqv:false,eqph:false};answers={};
+ $('added').textContent='0.00 mL';$('ph').textContent=fmt(pH(0),2);
+ $('curvePH').textContent=fmt(pH(0),2);$('curveVol').textContent='0.00 mL';
+ $('buretteLiquid').style.height='100%';$('flaskLiquid').style.height='38%';$('flaskLiquid').style.background='#dcecf7';$('colorText').textContent='Colorless';
+ $('buretteLabel').textContent=baseM.toFixed(3)+' M NaOH';
+ $('labStatus').textContent='Titration ready. Add NaOH gradually and observe the pH.';
+ ['eqVolInput','eqPhInput','q1','q2','q3','q4','q5','q6'].forEach(id=>$(id).value='');
+ ['eqVolFeedback','eqPhFeedback','f1','f2','f3','f4','f5','f6'].forEach(id=>$(id).textContent='');
+ $('toAnalysis').disabled=true;$('showReport').disabled=true;
+ $('collection').classList.add('hidden');$('analysis').classList.add('hidden');$('summary').classList.add('hidden');
+ show('titrate');show('curve');setTab(2);drawChart();updateBench();
+ $('setupMsg').textContent='Unknown sample assigned. Begin titrating.';
+}
+function updateBench(){
+ const currentPH=pH(vol),pink=currentPH>=8.3;
+ $('added').textContent=fmt(vol)+' mL';$('ph').textContent=fmt(currentPH,2);
+ $('curvePH').textContent=fmt(currentPH,2);$('curveVol').textContent=fmt(vol)+' mL';
+ $('buretteLiquid').style.height=Math.max(0,100-vol/50*100)+'%';
+ $('flaskLiquid').style.height=Math.min(78,38+(vol/50)*40)+'%';
+ $('flaskLiquid').style.background=pink?'#f2a0d0':'#dcecf7';$('colorText').textContent=pink?'Persistent pink':'Colorless';
+ $('labStatus').textContent=pink?'The solution is pink. You may have reached or passed the indicator endpoint. Step 4 is now available.':'Continue adding NaOH. Slow down as the pH begins to rise quickly.';
+ if(pink)show('collection');
+}
+function add(amount){
+ if(!started)return;if(vol+amount>50){$('labStatus').textContent='The burette is empty. Restart the titration to try again.';return}
+ vol=Math.round((vol+amount)*1000)/1000;points.push({v:vol,ph:pH(vol)});updateBench();drawChart();
+}
+function drawChart(){
+ const svg=$('chart'),W=720,H=390,L=65,R=20,T=18,B=52,iw=W-L-R,ih=H-T-B;
+ const x=v=>L+v/50*iw,y=ph=>T+(14-ph)/14*ih;
+ let s='';
+ for(let i=0;i<=14;i+=2){let yy=y(i);s+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#e3e8ee"/><text x="${L-12}" y="${yy+4}" text-anchor="end" font-size="12" fill="#536579">${i}</text>`}
+ for(let i=0;i<=50;i+=5){let xx=x(i);s+=`<line x1="${xx}" y1="${T}" x2="${xx}" y2="${H-B}" stroke="#f0f2f5"/><text x="${xx}" y="${H-B+22}" text-anchor="middle" font-size="12" fill="#536579">${i}</text>`}
+ s+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="#536579" stroke-width="2"/><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="#536579" stroke-width="2"/>`;
+ s+=`<text x="${L+iw/2}" y="${H-8}" text-anchor="middle" font-size="14" fill="#203044">NaOH added (mL)</text><text transform="translate(18 ${T+ih/2}) rotate(-90)" text-anchor="middle" font-size="14" fill="#203044">pH</text>`;
+ if(points.length){
+  let pd=points.map((p,i)=>(i?'L':'M')+x(p.v)+','+y(p.ph)).join(' ');
+  s+=`<path d="${pd}" fill="none" stroke="#2866a5" stroke-width="3"/>`;
+  points.forEach(p=>s+=`<circle cx="${x(p.v)}" cy="${y(p.ph)}" r="3.5" fill="#2866a5"/>`);
+ }
+ svg.innerHTML=s;
+}
+function near(a,b,tol){return Number.isFinite(a)&&Math.abs(a-b)<=tol}
+$('begin').onclick=begin;$('drop').onclick=()=>add(dropSize);$('addHalf').onclick=()=>add(.5);$('addOne').onclick=()=>add(1);$('addFive').onclick=()=>add(5);
+$('resetTrial').onclick=()=>{
+ if(!started)return;
+ vol=0;points=[];checks={eqv:false,eqph:false};answers={};
+ ['eqVolInput','eqPhInput','q1','q2','q3','q4','q5','q6'].forEach(id=>$(id).value='');
+ ['eqVolFeedback','eqPhFeedback','f1','f2','f3','f4','f5','f6'].forEach(id=>$(id).textContent='');
+ $('collectionStatus').textContent='Repeat the titration, then identify the equivalence-point volume and pH.';
+ $('analysisStatus').textContent='0 of 6 analysis questions correct.';
+ $('toAnalysis').disabled=true;$('showReport').disabled=true;
+ $('collection').classList.add('hidden');$('analysis').classList.add('hidden');$('summary').classList.add('hidden');
+ $('added').textContent='0.00 mL';$('ph').textContent=fmt(pH(0),2);
+ $('curvePH').textContent=fmt(pH(0),2);$('curveVol').textContent='0.00 mL';
+ $('buretteLiquid').style.height='100%';
+ $('flaskLiquid').style.height='38%';$('flaskLiquid').style.background='#dcecf7';
+ $('colorText').textContent='Colorless';
+ $('labStatus').textContent='Titration restarted. The burette is back at 0.00 mL. Your same unknown sample is ready to titrate again.';
+ setTab(2);drawChart();updateBench();
+};
+$('checkEqVol').onclick=()=>{
+ const a=Number($('eqVolInput').value);checks.eqv=near(a,equivalence(),eqTolerance);
+ setFeedback('eqVolFeedback',checks.eqv?'Correct. You identified the center of the steep region of the curve.':'Try again. Find the center of the sharp vertical rise in the graph, not the first persistent pink color.',checks.eqv);updateCollection();
+};
+$('checkEqPh').onclick=()=>{
+ const a=Number($('eqPhInput').value);checks.eqph=near(a,7,.5);
+ setFeedback('eqPhFeedback',checks.eqph?'Correct. Strong acid–strong base equivalence is approximately pH 7 at 25 °C.':'For a strong acid–strong base titration at 25 °C, the equivalence-point pH is approximately 7.',checks.eqph);updateCollection();
+};
+function updateCollection(){let n=Object.values(checks).filter(Boolean).length;$('collectionStatus').textContent=`${n} of 2 data-collection checks correct.`;$('toAnalysis').disabled=n!==2}
+$('toAnalysis').onclick=()=>{show('analysis');setTab(5);$('analysis').scrollIntoView({behavior:'smooth',block:'start'})};
+const trueEq=()=>equivalence(),molesBase=()=>baseM*trueEq()/1000,molesAcid=()=>molesBase();
+function checkQ(n){
+ let val=$('q'+n).value.trim(),ok=false,msg='';
+ if(n===1){ok=val==='correct';msg=ok?'Correct. The equation is balanced with a 1:1:1:1 coefficient ratio.':'Not quite. Count each type of atom on both sides of the equation.'}
+ if(n===2){ok=near(Number(val),trueEq()/1000,.0005);msg=ok?'Correct. You converted the equivalence-point volume from mL to L.':'Convert mL to L by dividing by 1000. Use the equivalence-point volume from Step 4.'}
+ if(n===3){const q2vol=Number($('q2').value);const expected=baseM*q2vol;ok=Number.isFinite(q2vol)&&q2vol>0&&near(Number(val),expected,Math.max(0.000002,expected*.025));msg=ok?'Correct. Moles = molarity × volume in liters, using the volume you recorded in Question 2.':'Use n = M × V. Multiply the NaOH molarity selected in Step 1 by your Question 2 volume in liters.'}
+ if(n===4){ok=val==='1:1';msg=ok?'Correct. One mole of HCl reacts with one mole of NaOH.':'Look at the coefficients in the balanced equation.'}
+ if(n===5){const q3moles=Number($('q3').value);ok=Number.isFinite(q3moles)&&q3moles>0&&near(Number(val),q3moles,Math.max(0.000002,q3moles*.025));msg=ok?'Correct. The 1:1 ratio means moles of HCl equal moles of NaOH at equivalence.':'Use your Question 3 result and the 1:1 mole ratio.'}
+ if(n===6){const q5moles=Number($('q5').value);const expected=q5moles/(acidV/1000);ok=Number.isFinite(q5moles)&&q5moles>0&&near(Number(val),expected,Math.max(.001,expected*.025));msg=ok?'Correct! You determined the unknown HCl concentration from your experimental data.':'Use M = moles ÷ volume in liters. Use the original HCl volume from Step 1, not the total solution volume.'}
+ answers[n]={value:val,correct:ok};setFeedback('f'+n,msg,ok);updateAnalysis();
+}
+document.querySelectorAll('[data-check]').forEach(b=>b.onclick=()=>checkQ(Number(b.dataset.check)));
+function updateAnalysis(){let n=[1,2,3,4,5,6].filter(i=>answers[i]?.correct).length;$('analysisStatus').textContent=`${n} of 6 analysis questions correct. You can revise any answer.`;$('showReport').disabled=n!==6}
+$('showReport').onclick=()=>{
+ const studentEq=Number($('eqVolInput').value),studentMolesNaOH=baseM*studentEq/1000,studentMolesHCl=studentMolesNaOH,studentConc=studentMolesHCl/(acidV/1000);
+ const rows=[['HCl sample volume',fmt(acidV)+' mL'],['NaOH concentration',baseM.toFixed(3)+' M'],['Equivalence-point volume',fmt(studentEq)+' mL'],['Equivalence-point pH',fmt(Number($('eqPhInput').value),1)],['Moles NaOH',studentMolesNaOH.toExponential(4)+' mol'],['Moles HCl',studentMolesHCl.toExponential(4)+' mol'],['Calculated HCl concentration',studentConc.toFixed(4)+' M']];
+ let html='<h3>Didier’s Virtual Titration Lab — Student Report</h3><p><strong>Reaction:</strong> HCl + NaOH → NaCl + H₂O</p><table><tbody>'+rows.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('')+'</tbody></table><h3>Data analysis</h3><ol><li>Balanced reaction: HCl + NaOH → NaCl + H₂O</li><li>NaOH volume in liters: '+(studentEq/1000).toFixed(5)+' L</li><li>Moles NaOH = '+baseM.toFixed(3)+' mol/L × '+(studentEq/1000).toFixed(5)+' L = '+studentMolesNaOH.toExponential(4)+' mol</li><li>HCl : NaOH mole ratio = 1 : 1</li><li>Moles HCl = '+studentMolesHCl.toExponential(4)+' mol</li><li>HCl molarity = '+studentMolesHCl.toExponential(4)+' mol ÷ '+(acidV/1000).toFixed(5)+' L = '+studentConc.toFixed(4)+' M</li></ol><p><strong>Conclusion:</strong> Based on the equivalence point from the titration curve and the 1:1 reaction stoichiometry, the calculated concentration of the unknown HCl sample is <strong>'+studentConc.toFixed(4)+' M</strong>.</p>';
+ $('reportContent').innerHTML=html;show('summary');setTab(5);
+};
+$('printReport').addEventListener('click',()=>{
+ const report=$('summary');
+ if(!report || report.classList.contains('hidden'))return;
+ window.focus();
+ window.print();
+});
+$('newLab').onclick=()=>{['titrate','curve','collection','analysis','summary'].forEach(id=>$(id).classList.add('hidden'));$('setupMsg').textContent='';setTab(1);window.scrollTo({top:0,behavior:'smooth'})};
+drawChart();
+</script>
+</body></html>
